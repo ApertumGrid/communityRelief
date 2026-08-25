@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Relief Appeal</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-heading: #ffffff;
+            --accent-color: #3fb950;
+            --accent-hover: #2ea043;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 80px 20px 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .live-tracker-widget {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background-color: #161b22;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+        }
+
+        .pulse-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #3fb950;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #3fb950;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .tracker-info {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .tracker-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #8b949e;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .tracker-amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3fb950;
+            font-family: monospace;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        h1, h2 {
+            color: var(--text-heading);
+            margin-top: 0;
+        }
+
+        .wallet-section {
+            margin-top: 24px;
+        }
+
+        .wallet-row {
+            margin-bottom: 20px;
+        }
+
+        .wallet-label {
+            font-weight: bold;
+            color: var(--text-heading);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .wallet-subtext {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .wallet-input {
+            width: 100%;
+            background-color: #0d1117;
+            border: 1px solid var(--border-color);
+            color: #58a6ff;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .footer-note {
+            font-size: 13px;
+            color: #8b949e;
+            text-align: center;
+            margin-top: 32px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="live-tracker-widget" id="tracker-widget">
+    <div class="pulse-indicator"></div>
+    <div class="tracker-info">
+        <span class="tracker-label">Total Raised (Live)</span>
+        <span class="tracker-amount" id="total-raised">$0.00 USD</span>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h1>Community Urgent Appeal</h1>
+        <hr style="border-color: var(--border-color); margin-bottom: 24px;">
+
+        <p>Some of you may remember me as Two Kids One Wallet guy. Something pulled me in, maybe a calling, to build on the blockchain, and that's what I've done, day in, day out, for the last nine months, hoping to survive.</p>
+
+        <p>Over those nine months, our problems have only gotten worse, and worse, and worse. Probably only by the grace of God will we get out of this.</p>
+
+        <p>We, as a family, are coming to you today on our knees. Not me as the founder of SocialHub, but as an active member of this community, and I'm asking, can we stand together? Can this community help a single father and his two kids keep going, keep fighting?</p>
+
+        <p>This community is strong. I've seen it. I'm asking you to show it now, for one of your own.</p>
+
+        <p>There will be a live tracker showing exactly what's being raised, in real time, straight from the blockchain. Full transparency.</p>
+
+        <p>May you share this with your team, and your community. And from the bottom of our hearts, thank you.</p>
+    </div>
+
+    <div class="card wallet-section">
+        <h2>Direct Wallet Contributions</h2>
+        <p>100% of contributions go directly to support our family via the verified wallet addresses below. A live tracker on the page monitors incoming blockchain contributions for real-time transparency.</p>
+
+        <div class="wallet-row">
+            <span class="wallet-label">EVM / APTM Multi-Chain Address:</span>
+            <span class="wallet-subtext">Supports APTM, WAPTM, Ethereum (ETH, USDT, USDC), BNB Smart Chain (BNB, USDT), Polygon, and Arbitrum.</span>
+            <div class="input-group">
+                <input type="text" readonly value="0xe348feDea1850a0c2d4aC0fed3f903774dE1e16A" id="evm-wallet" class="wallet-input">
+                <button class="copy-btn" onclick="copyAddress('evm-wallet')">Copy Address</button>
+            </div>
+        </div>
+
+        <div class="wallet-row">
+            <span class="wallet-label">Solana (SOL & SPL USDT/USDC) Address:</span>
+            <div class="input-group">
+                <input type="text" readonly value="GKZBHeN3QbL3bmLcSHqBL2n6U4pW3sjd9E5Tq3msFRMW" id="sol-wallet" class="wallet-input">
+                <button class="copy-btn" onclick="copyAddress('sol-wallet')">Copy Address</button>
+            </div>
+        </div>
+
+        <div class="wallet-row">
+            <span class="wallet-label">TRON (TRX & TRC-20 USDT) Address:</span>
+            <div class="input-group">
+                <input type="text" readonly value="TNj6Uo4mDEkfgaZjVNkAasqqKp7qUyJH5u" id="trx-wallet" class="wallet-input">
+                <button class="copy-btn" onclick="copyAddress('trx-wallet')">Copy Address</button>
+            </div>
+        </div>
+
+        <div class="wallet-row">
+            <span class="wallet-label">Bitcoin (BTC) Address:</span>
+            <div class="input-group">
+                <input type="text" readonly value="bc1q5gdkznre5mum2zdp6lstryf4acl2fm9yllvflh" id="btc-wallet" class="wallet-input">
+                <button class="copy-btn" onclick="copyAddress('btc-wallet')">Copy Address</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        Thank you for standing with our family and showing the strength of our community.
+    </div>
+</div>
+
+<script>
+    function copyAddress(elementId) {
+        const copyText = document.getElementById(elementId);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        
+        const btn = copyText.nextElementSibling;
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        setTimeout(() => { btn.innerText = originalText; }, 2000);
+    }
+
+    const WALLETS = {
+        btc: "bc1q5gdkznre5mum2zdp6lstryf4acl2fm9yllvflh",
+        evm: "0xe348feDea1850a0c2d4aC0fed3f903774dE1e16A",
+        sol: "GKZBHeN3QbL3bmLcSHqBL2n6U4pW3sjd9E5Tq3msFRMW",
+        trx: "TNj6Uo4mDEkfgaZjVNkAasqqKp7qUyJH5u"
+    };
+
+    async function syncLiveTracker() {
+        try {
+            const jsonRes = await fetch('./tracker.json');
+            if (jsonRes.ok) {
+                const data = await jsonRes.json();
+                if (data && data.formatted) {
+                    document.getElementById("total-raised").innerText = data.formatted;
+                    return;
+                }
+            }
+        } catch (e) {}
+
+        try {
+            let totalUSD = 0;
+            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tron&vs_currencies=usd');
+            const prices = priceRes.ok ? await priceRes.json() : { bitcoin: { usd: 0 }, ethereum: { usd: 0 }, solana: { usd: 0 }, tron: { usd: 0 } };
+
+            if (WALLETS.btc) {
+                const btcRes = await fetch(`https://blockstream.info/api/address/${WALLETS.btc}`);
+                if (btcRes.ok) {
+                    const btcData = await btcRes.json();
+                    const fundedSats = btcData.chain_stats.funded_txo_sum || 0;
+                    totalUSD += (fundedSats / 100000000) * (prices.bitcoin?.usd || 0);
+                }
+            }
+
+            if (WALLETS.evm) {
+                const ethRes = await fetch('https://cloudflare-eth.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jsonrpc: "2.0", method: "eth_getBalance", params: [WALLETS.evm, "latest"], id: 1 })
+                });
+                if (ethRes.ok) {
+                    const ethData = await ethRes.json();
+                    if (ethData.result) {
+                        const wei = parseInt(ethData.result, 16);
+                        totalUSD += (wei / 1e18) * (prices.ethereum?.usd || 0);
+                    }
+                }
+            }
+
+            if (WALLETS.sol) {
+                const solRes = await fetch('https://api.mainnet-beta.solana.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [WALLETS.sol] })
+                });
+                if (solRes.ok) {
+                    const solData = await solRes.json();
+                    if (solData.result && solData.result.value) {
+                        totalUSD += (solData.result.value / 1e9) * (prices.solana?.usd || 0);
+                    }
+                }
+            }
+
+            document.getElementById("total-raised").innerText = `$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
+        } catch (error) {
+            console.error("Tracker sync error:", error);
+        }
+    }
+
+    syncLiveTracker();
+    setInterval(syncLiveTracker, 20000);
+</script>
+
+</body>
+</html>
