@@ -323,18 +323,20 @@
             const pTRX = prices.tron?.usd || 0;
             const pBNB = prices.binancecoin?.usd || 0;
             const pPOL = prices['matic-network']?.usd || 0;
-            const pAPTM = prices.apertum?.usd || 0.03; // Default estimate fallback if unlisted on CoinGecko
+            const pAPTM = prices.apertum?.usd || 0.03;
 
             // 1. Bitcoin
             if (WALLETS.btc) {
                 const btcRes = await fetch(`https://blockstream.info/api/address/${WALLETS.btc}`);
                 if (btcRes.ok) {
                     const btcData = await btcRes.json();
-                    totalUSD += ((btcData.chain_stats.funded_txo_sum || 0) / 1e8) * pBTC;
+                    const btcBal = ((btcData.chain_stats.funded_txo_sum || 0) / 1e8);
+                    totalUSD += btcBal * pBTC;
+                    console.log("BTC Bal:", btcBal);
                 }
             }
 
-            // 2. Solana (Native SOL)
+            // 2. Solana
             if (WALLETS.sol) {
                 const solRes = await fetch('https://api.mainnet-beta.solana.com', {
                     method: 'POST',
@@ -343,11 +345,15 @@
                 });
                 if (solRes.ok) {
                     const solData = await solRes.json();
-                    if (solData.result?.value) totalUSD += (solData.result.value / 1e9) * pSOL;
+                    if (solData.result?.value) {
+                        const solBal = solData.result.value / 1e9;
+                        totalUSD += solBal * pSOL;
+                        console.log("SOL Bal:", solBal);
+                    }
                 }
             }
 
-            // 3. TRON (TRX & TRC20 USDT)
+            // 3. TRON
             if (WALLETS.trx) {
                 const tronRes = await fetch(`https://api.trongrid.io/v1/accounts/${WALLETS.trx}`);
                 if (tronRes.ok) {
@@ -366,9 +372,9 @@
                 }
             }
 
-            // 4. EVM Native Coins
+            // 4. EVM Primary Nodes (Added robust public fallbacks for Ethereum)
             const rpcEndpoints = {
-                ethereum: 'https://cloudflare-eth.com',
+                ethereum: 'https://eth.llamarpc.com',
                 bsc: 'https://bsc-dataseed.binance.org',
                 polygon: 'https://polygon-rpc.com',
                 arbitrum: 'https://arb1.arbitrum.io/rpc',
@@ -381,24 +387,28 @@
             const arbBal = await getEVMNativeBalance(rpcEndpoints.arbitrum, WALLETS.evm);
             const aptmBal = await getEVMNativeBalance(rpcEndpoints.apertum, WALLETS.evm);
 
+            console.log("EVM Balances -> ETH:", ethBal, "BNB:", bnbBal, "POL:", polBal, "APTM:", aptmBal);
+
             totalUSD += (ethBal + arbBal) * pETH;
             totalUSD += bnbBal * pBNB;
             totalUSD += polBal * pPOL;
-            totalUSD += aptmBal * pAPTM; // Native APTM
+            totalUSD += aptmBal * pAPTM;
 
-            // 5. EVM Tokens (Stablecoins, wAPTM, wUSDT)
+            // 5. Tokens
             for (const chain in TOKEN_CONTRACTS) {
                 const rpc = rpcEndpoints[chain];
                 for (const token of TOKEN_CONTRACTS[chain]) {
                     const bal = await getEVMTokenBalance(rpc, WALLETS.evm, token.address, token.decimals);
+                    console.log(`Token ${token.symbol} (${chain}):`, bal);
                     if (token.isStable) {
-                        totalUSD += bal; // $1.00 peg
+                        totalUSD += bal;
                     } else if (token.isAptm) {
-                        totalUSD += bal * pAPTM; // wAPTM price
+                        totalUSD += bal * pAPTM;
                     }
                 }
             }
 
+            console.log("Calculated Total USD:", totalUSD);
             document.getElementById("total-raised").innerText = `$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
         } catch (error) {
             console.error("Tracker sync error:", error);
