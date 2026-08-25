@@ -314,6 +314,7 @@
 
         try {
             let totalUSD = 0;
+            const WITHDRAWN_OFFSET_USD = 0.00;
 
             const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tron,binancecoin,matic-network,apertum&vs_currencies=usd');
             const prices = priceRes.ok ? await priceRes.json() : {};
@@ -426,5 +427,6 @@
 
 </body>
 </html>
+
 
 
