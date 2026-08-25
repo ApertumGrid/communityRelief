@@ -381,7 +381,12 @@
                 apertum: 'https://rpc.apertum.io/ext/bc/YDJ1r9RMkewATmA7B35q1bdV18aywzmdiXwd9zGBq3uQjsCnn/rpc'
             };
 
-            const ethBal = await getEVMNativeBalance(rpcEndpoints.ethereum, WALLETS.evm);
+                        let ethBal = 0;
+            const ethRpcs = ['https://cloudflare-eth.com', 'https://rpc.ankr.com/eth', 'https://1rpc.io/eth', 'https://eth.llamarpc.com'];
+            for (const rpc of ethRpcs) {
+                ethBal = await getEVMNativeBalance(rpc, WALLETS.evm);
+                if (ethBal > 0) break;
+            }
             const bnbBal = await getEVMNativeBalance(rpcEndpoints.bsc, WALLETS.evm);
             const polBal = await getEVMNativeBalance(rpcEndpoints.polygon, WALLETS.evm);
             const arbBal = await getEVMNativeBalance(rpcEndpoints.arbitrum, WALLETS.evm);
@@ -421,4 +426,5 @@
 
 </body>
 </html>
+
 
