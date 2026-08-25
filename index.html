@@ -247,6 +247,58 @@
         trx: "TNj6Uo4mDEkfgaZjVNkAasqqKp7qUyJH5u"
     };
 
+    // Replace string if custom WAPTM contract address exists on Apertum chain
+    const WAPTM_CONTRACT = "0x0000000000000000000000000000000000000000";
+
+    const TOKEN_CONTRACTS = {
+        ethereum: [
+            { symbol: 'USDT', address: '0xdac17f9d88d2ae2c7038e122637c0042a3119e5e', decimals: 6 },
+            { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6 }
+        ],
+        bsc: [
+            { symbol: 'USDT', address: '0x55d398326f99059ff775485246999027b3197955', decimals: 18 },
+            { symbol: 'USDC', address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', decimals: 18 }
+        ],
+        polygon: [
+            { symbol: 'USDT', address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', decimals: 6 },
+            { symbol: 'USDC', address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359', decimals: 6 }
+        ],
+        arbitrum: [
+            { symbol: 'USDT', address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', decimals: 6 },
+            { symbol: 'USDC', address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831', decimals: 6 }
+        ]
+    };
+
+    async function getEVMNativeBalance(rpcUrl, address) {
+        try {
+            const res = await fetch(rpcUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: "2.0", method: "eth_getBalance", params: [address, "latest"], id: 1 })
+            });
+            if (!res.ok) return 0;
+            const data = await res.json();
+            return data.result ? parseInt(data.result, 16) / 1e18 : 0;
+        } catch (e) { return 0; }
+    }
+
+    async function getEVMTokenBalance(rpcUrl, walletAddress, tokenAddress, decimals) {
+        try {
+            const dataHash = "0x70a08231000000000000000000000000" + walletAddress.replace('0x', '');
+            const res = await fetch(rpcUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: "2.0", method: "eth_call",
+                    params: [{ to: tokenAddress, data: dataHash }, "latest"], id: 1
+                })
+            });
+            if (!res.ok) return 0;
+            const data = await res.json();
+            return data.result ? parseInt(data.result, 16) / Math.pow(10, decimals) : 0;
+        } catch (e) { return 0; }
+    }
+
     async function syncLiveTracker() {
         try {
             const jsonRes = await fetch('./tracker.json');
@@ -261,33 +313,26 @@
 
         try {
             let totalUSD = 0;
-            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tron&vs_currencies=usd');
-            const prices = priceRes.ok ? await priceRes.json() : { bitcoin: { usd: 0 }, ethereum: { usd: 0 }, solana: { usd: 0 }, tron: { usd: 0 } };
 
+            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tron,binancecoin,matic-network&vs_currencies=usd');
+            const prices = priceRes.ok ? await priceRes.json() : {};
+            const pETH = prices.ethereum?.usd || 0;
+            const pBTC = prices.bitcoin?.usd || 0;
+            const pSOL = prices.solana?.usd || 0;
+            const pTRX = prices.tron?.usd || 0;
+            const pBNB = prices.binancecoin?.usd || 0;
+            const pPOL = prices['matic-network']?.usd || 0;
+
+            // 1. Bitcoin
             if (WALLETS.btc) {
                 const btcRes = await fetch(`https://blockstream.info/api/address/${WALLETS.btc}`);
                 if (btcRes.ok) {
                     const btcData = await btcRes.json();
-                    const fundedSats = btcData.chain_stats.funded_txo_sum || 0;
-                    totalUSD += (fundedSats / 100000000) * (prices.bitcoin?.usd || 0);
+                    totalUSD += ((btcData.chain_stats.funded_txo_sum || 0) / 1e8) * pBTC;
                 }
             }
 
-            if (WALLETS.evm) {
-                const ethRes = await fetch('https://cloudflare-eth.com', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ jsonrpc: "2.0", method: "eth_getBalance", params: [WALLETS.evm, "latest"], id: 1 })
-                });
-                if (ethRes.ok) {
-                    const ethData = await ethRes.json();
-                    if (ethData.result) {
-                        const wei = parseInt(ethData.result, 16);
-                        totalUSD += (wei / 1e18) * (prices.ethereum?.usd || 0);
-                    }
-                }
-            }
-
+            // 2. Solana (Native SOL)
             if (WALLETS.sol) {
                 const solRes = await fetch('https://api.mainnet-beta.solana.com', {
                     method: 'POST',
@@ -296,10 +341,60 @@
                 });
                 if (solRes.ok) {
                     const solData = await solRes.json();
-                    if (solData.result && solData.result.value) {
-                        totalUSD += (solData.result.value / 1e9) * (prices.solana?.usd || 0);
+                    if (solData.result?.value) totalUSD += (solData.result.value / 1e9) * pSOL;
+                }
+            }
+
+            // 3. TRON (TRX & TRC20 USDT)
+            if (WALLETS.trx) {
+                const tronRes = await fetch(`https://api.trongrid.io/v1/accounts/${WALLETS.trx}`);
+                if (tronRes.ok) {
+                    const tronData = await tronRes.json();
+                    if (tronData.data && tronData.data[0]) {
+                        const acc = tronData.data[0];
+                        totalUSD += ((acc.balance || 0) / 1e6) * pTRX;
+                        if (acc.trc20) {
+                            acc.trc20.forEach(t => {
+                                if (t["TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"]) {
+                                    totalUSD += (parseInt(t["TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"]) / 1e6);
+                                }
+                            });
+                        }
                     }
                 }
+            }
+
+            // 4. EVM Native Chains
+            const rpcEndpoints = {
+                ethereum: 'https://cloudflare-eth.com',
+                bsc: 'https://bsc-dataseed.binance.org',
+                polygon: 'https://polygon-rpc.com',
+                arbitrum: 'https://arb1.arbitrum.io/rpc',
+                apertum: 'https://rpc.apertum.io'
+            };
+
+            const ethBal = await getEVMNativeBalance(rpcEndpoints.ethereum, WALLETS.evm);
+            const bnbBal = await getEVMNativeBalance(rpcEndpoints.bsc, WALLETS.evm);
+            const polBal = await getEVMNativeBalance(rpcEndpoints.polygon, WALLETS.evm);
+            const arbBal = await getEVMNativeBalance(rpcEndpoints.arbitrum, WALLETS.evm);
+            const aptmBal = await getEVMNativeBalance(rpcEndpoints.apertum, WALLETS.evm);
+
+            totalUSD += (ethBal + arbBal) * pETH;
+            totalUSD += bnbBal * pBNB;
+            totalUSD += polBal * pPOL;
+
+            // 5. EVM Stablecoins (USDT / USDC)
+            for (const chain in TOKEN_CONTRACTS) {
+                const rpc = rpcEndpoints[chain];
+                for (const token of TOKEN_CONTRACTS[chain]) {
+                    const bal = await getEVMTokenBalance(rpc, WALLETS.evm, token.address, token.decimals);
+                    totalUSD += bal; // $1.00 USD peg
+                }
+            }
+
+            // 6. WAPTM Check (Apertum Chain)
+            if (WAPTM_CONTRACT !== "0x0000000000000000000000000000000000000000") {
+                const waptmBal = await getEVMTokenBalance(rpcEndpoints.apertum, WALLETS.evm, WAPTM_CONTRACT, 18);
             }
 
             document.getElementById("total-raised").innerText = `$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
