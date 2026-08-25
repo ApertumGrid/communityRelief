@@ -190,7 +190,7 @@
 
         <div class="wallet-row">
             <span class="wallet-label">EVM / APTM Multi-Chain Address:</span>
-            <span class="wallet-subtext">Supports APTM, WAPTM, Ethereum (ETH, USDT, USDC), BNB Smart Chain (BNB, USDT), Polygon, and Arbitrum.</span>
+            <span class="wallet-subtext">Supports APTM, wAPTM, wUSDT, Ethereum (ETH, USDT, USDC), BNB Smart Chain (BNB, USDT), Polygon, and Arbitrum.</span>
             <div class="input-group">
                 <input type="text" readonly value="0xe348feDea1850a0c2d4aC0fed3f903774dE1e16A" id="evm-wallet" class="wallet-input">
                 <button class="copy-btn" onclick="copyAddress('evm-wallet')">Copy Address</button>
@@ -247,25 +247,26 @@
         trx: "TNj6Uo4mDEkfgaZjVNkAasqqKp7qUyJH5u"
     };
 
-    // Replace string if custom WAPTM contract address exists on Apertum chain
-    const WAPTM_CONTRACT = "0x0000000000000000000000000000000000000000";
-
     const TOKEN_CONTRACTS = {
         ethereum: [
-            { symbol: 'USDT', address: '0xdac17f9d88d2ae2c7038e122637c0042a3119e5e', decimals: 6 },
-            { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6 }
+            { symbol: 'USDT', address: '0xdac17f9d88d2ae2c7038e122637c0042a3119e5e', decimals: 6, isStable: true },
+            { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6, isStable: true }
         ],
         bsc: [
-            { symbol: 'USDT', address: '0x55d398326f99059ff775485246999027b3197955', decimals: 18 },
-            { symbol: 'USDC', address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', decimals: 18 }
+            { symbol: 'USDT', address: '0x55d398326f99059ff775485246999027b3197955', decimals: 18, isStable: true },
+            { symbol: 'USDC', address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', decimals: 18, isStable: true }
         ],
         polygon: [
-            { symbol: 'USDT', address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', decimals: 6 },
-            { symbol: 'USDC', address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359', decimals: 6 }
+            { symbol: 'USDT', address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', decimals: 6, isStable: true },
+            { symbol: 'USDC', address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359', decimals: 6, isStable: true }
         ],
         arbitrum: [
-            { symbol: 'USDT', address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', decimals: 6 },
-            { symbol: 'USDC', address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831', decimals: 6 }
+            { symbol: 'USDT', address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', decimals: 6, isStable: true },
+            { symbol: 'USDC', address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831', decimals: 6, isStable: true }
+        ],
+        apertum: [
+            { symbol: 'wAPTM', address: '0x110Ac02Ba3384Bc055c13A87766049a74517BedA', decimals: 18, isStable: false, isAptm: true },
+            { symbol: 'wUSDT', address: '0x1487Db421F6B58e77bfefc905fDc1EDE5Fb85C7F', decimals: 6, isStable: true }
         ]
     };
 
@@ -314,7 +315,7 @@
         try {
             let totalUSD = 0;
 
-            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tron,binancecoin,matic-network&vs_currencies=usd');
+            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tron,binancecoin,matic-network,apertum&vs_currencies=usd');
             const prices = priceRes.ok ? await priceRes.json() : {};
             const pETH = prices.ethereum?.usd || 0;
             const pBTC = prices.bitcoin?.usd || 0;
@@ -322,6 +323,7 @@
             const pTRX = prices.tron?.usd || 0;
             const pBNB = prices.binancecoin?.usd || 0;
             const pPOL = prices['matic-network']?.usd || 0;
+            const pAPTM = prices.apertum?.usd || 0.03; // Default estimate fallback if unlisted on CoinGecko
 
             // 1. Bitcoin
             if (WALLETS.btc) {
@@ -364,7 +366,7 @@
                 }
             }
 
-            // 4. EVM Native Chains
+            // 4. EVM Native Coins
             const rpcEndpoints = {
                 ethereum: 'https://cloudflare-eth.com',
                 bsc: 'https://bsc-dataseed.binance.org',
@@ -382,19 +384,19 @@
             totalUSD += (ethBal + arbBal) * pETH;
             totalUSD += bnbBal * pBNB;
             totalUSD += polBal * pPOL;
+            totalUSD += aptmBal * pAPTM; // Native APTM
 
-            // 5. EVM Stablecoins (USDT / USDC)
+            // 5. EVM Tokens (Stablecoins, wAPTM, wUSDT)
             for (const chain in TOKEN_CONTRACTS) {
                 const rpc = rpcEndpoints[chain];
                 for (const token of TOKEN_CONTRACTS[chain]) {
                     const bal = await getEVMTokenBalance(rpc, WALLETS.evm, token.address, token.decimals);
-                    totalUSD += bal; // $1.00 USD peg
+                    if (token.isStable) {
+                        totalUSD += bal; // $1.00 peg
+                    } else if (token.isAptm) {
+                        totalUSD += bal * pAPTM; // wAPTM price
+                    }
                 }
-            }
-
-            // 6. WAPTM Check (Apertum Chain)
-            if (WAPTM_CONTRACT !== "0x0000000000000000000000000000000000000000") {
-                const waptmBal = await getEVMTokenBalance(rpcEndpoints.apertum, WALLETS.evm, WAPTM_CONTRACT, 18);
             }
 
             document.getElementById("total-raised").innerText = `$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
