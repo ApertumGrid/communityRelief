@@ -339,7 +339,7 @@
 
             // 2. Solana
             if (WALLETS.sol) {
-                const solRes = await fetch('https://api.mainnet-beta.solana.com', {
+                const solRes = await fetch('https://api.mainnet-beta-solana.logicalops.com', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [WALLETS.sol] })
@@ -375,9 +375,9 @@
 
             // 4. EVM Primary Nodes (Added robust public fallbacks for Ethereum)
             const rpcEndpoints = {
-                ethereum: 'https://eth.llamarpc.com',
+                ethereum: 'https://cloudflare-eth.com',
                 bsc: 'https://bsc-dataseed.binance.org',
-                polygon: 'https://polygon-rpc.com',
+                polygon: 'https://polygon-bor-rpc.publicnode.com',
                 arbitrum: 'https://arb1.arbitrum.io/rpc',
                 apertum: 'https://rpc.apertum.io/ext/bc/YDJ1r9RMkewATmA7B35q1bdV18aywzmdiXwd9zGBq3uQjsCnn/rpc'
             };
@@ -427,6 +427,7 @@
 
 </body>
 </html>
+
 
 
 
