@@ -339,7 +339,7 @@
 
             // 2. Solana
             if (WALLETS.sol) {
-                const solRes = await fetch('https://api.mainnet-beta-solana.logicalops.com', {
+                const solRes = await fetch('https://api.mainnet-beta.solana.com', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [WALLETS.sol] })
@@ -427,6 +427,7 @@
 
 </body>
 </html>
+
 
 
 
